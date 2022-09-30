@@ -8,6 +8,7 @@ function App() {
   const [sendUserMoney,setSendUserMoney] = useState('');
   const [sendAdress,setSendAdress] = useState('');
   const [sendUserBalance,setSendUserBalance] = useState("");
+  const [loading,setLoading] = useState(false);
   const inputRef = useRef();
 
   const provider = new ethers.providers.Web3Provider(window.ethereum);
@@ -24,20 +25,20 @@ function App() {
     // console.log(walletKey.address === wallet.address);
   }, [])
 
-  const getSearchUserBalance = async() => {
-    try {
-    if(inputRef.current.value.length === 0) {
-      alert('입력하세요');
-      return
-    }
-    setSendAdress(inputRef.current.value);
-    const sendMoney = await provider.getBalance(sendAdress);
-    const eth = ethers.utils.formatEther(sendMoney);
-    setSendUserMoney(eth);
-    } catch {
-      alert("에러");
-    }
-  }
+  // const getSearchUserBalance = async() => {
+  //   try {
+  //   if(inputRef.current.value.length === 0) {
+  //     alert('입력하세요');
+  //     return
+  //   }
+  //   setSendAdress(inputRef.current.value);
+  //   const sendMoney = await provider.getBalance(sendAdress);
+  //   const eth = ethers.utils.formatEther(sendMoney);
+  //   setSendUserMoney(eth);
+  //   } catch {
+  //     alert("에러");
+  //   }
+  // }
 
   const getBalance = async() => {
     try {
@@ -45,71 +46,28 @@ function App() {
       const user = await signer.getAddress(); // 사용자의 계정 가져오기
       const balance = await provider.getBalance(user); // 사용자의 잔액 가져오기
       setUserAdress(user);
-      setUserEth(ethers.utils.formatEther(balance)); // 사용자의 잔액을 보기좋게 포맷
+      setUserEth(ethers.utils.formatEther(balance)); // 사용자의 잔액을 보기좋게 포맷my hn,
     } catch {
       setUserAdress("정보없음");
       setUserEth("");
     }
   }
 
-  // const metaMaskOn = async () => {
-  //   const domain = {
-  //     name: 'teammapa.hoo',
-  //     version: '1',
-  //     chainId: 4,
-  //     verifyingContract: '0xCcCCccccCCCCcCCCCCCcCcCccCcCCCcCcccccccC'
-  //   };
-
-  //   const types = {
-  //     Person: [
-  //       { name: 'wallet', type: 'address' }
-  //     ],
-  //     Mail: [
-  //       { name: 'from', type: 'Person' },
-  //       { name: 'to', type: 'Person' },
-  //       { name: 'contents', type: 'string' }
-  //     ]
-  //   };
-
-  //   const value = {
-  //     from: {
-  //       name: 'Kim',
-  //       wallet: userAdress
-  //     },
-  //     to: {
-  //       name: 'Hoo',
-  //       wallet: sendAdress
-  //     },
-  //     contents: 'MONEY!',
-  //   };
-
-  //   await signer._signTypedData(domain, types, value);
-
-  //   let a = await signer.sendTransaction();
-
-  //   console.log(signer.getTransactionCount());
-  // }
-
-
   const metaMaskOn = async () => {
-    let gas = await provider.getGasPrice();
-
-    let parseValue = ethers.utils.formatUnits(5000000000000000, 18);
-    console.log(parseValue,'value');
-
-
-    let gasFinal = utils.formatEther(gas);
-    console.log(gasFinal);
-
-    let tx = {
-      to : "0xAb1f96bd07CA450199AF3e2214Efc3CD78e03873",
-      value : ethers.utils.parseEther(parseValue),
-      // gasLimit: 50000
+    setLoading(true);
+    try {
+      let tx = {
+        to : sendAdress,
+        value : ethers.utils.parseEther(userEth),
+      }
+      await signer.signMessage('dmnkasdns');
+      // console.log(await wallet.signTransaction(tx))
+      await wallet.sendTransaction(tx);
+      alert("성공!")
+    } catch {
+      alert('전송을 실패 했습니다.')
     }
-
-
-    await wallet.signMessage('dmnkasdns');
-    await wallet.sendTransaction(tx);
+    setLoading(false);
   }
 
   
@@ -117,14 +75,20 @@ function App() {
     <div className="App">
       <div>
         <span>0x79884Fd260464238717600F79b414103E8D0de83</span>
-        <input type={'text'} ref={inputRef} />
-        <button onClick={getSearchUserBalance}>검색</button>
+
         {/* <button onClick={metaMaskOn}>전송</button> */}
       </div>
       <div>
-        <h1>잔액</h1>
-        <p>{sendAdress.length < 1 ? userAdress : sendAdress} : {sendUserMoney.length < 1 ? userEth : sendUserMoney} ETH</p>
+        {
+          !loading
+          ? <> <h1>잔액</h1>
+          <p>{userAdress} : {userEth} ETH</p></>
+          : <h1>진행중</h1>
+        }
+       
         {/* 원본 유지용 필요  */}
+        <input type={'text'} ref={inputRef} value={sendAdress} onChange={(e) => setSendAdress(e.target.value)} style={{width : "fit-content"}}/>
+        <span style={{padding : "0 20px"}}>으로</span>
         <input type={'number'} value={userEth} onChange={e=>{setUserEth(e.target.value)}}/>
         <button onClick={metaMaskOn}>지급하기</button>
       </div>
